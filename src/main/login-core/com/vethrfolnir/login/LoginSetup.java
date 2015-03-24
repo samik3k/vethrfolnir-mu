@@ -14,56 +14,68 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.vethrfolnir;
+package com.vethrfolnir.login;
 
 import java.io.File;
 
-import com.vethrfolnir.login.LoginServerApplication;
+import com.vethrfolnir.MuSetupTemplate;
+import com.vethrfolnir.login.network.NetworkClientServer;
+import com.vethrfolnir.login.network.NetworkGameServer;
 import com.vethrfolnir.login.services.GameNameService;
+import com.vethrfolnir.services.threads.CorvusThreadPool;
+import com.vethrfolnir.tools.Tools;
 
 import corvus.corax.Corax;
-import corvus.corax.CorvusConfig;
+import corvus.corax.Scope;
+import corvus.corax.config.CorvusConfig;
 
 /**
  * @author Vlad
  *
  */
-public class LoginSetup extends MuSetupTemplate implements Runnable{
+public class LoginSetup extends MuSetupTemplate implements Runnable {
 
 	//Test purpose
 	static {
 		if(!new File("config").exists()) {
-			CorvusConfig.WorkingDirectory = "./dist/LoginServer";
+			CorvusConfig.WorkingDirectory = new File("./dist/LoginServer");
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.vethrfolnir.MuSetupTemplate#setupAction()
-	 */
 	@Override
 	public void setupAction() {
-		addSingleton(GameNameService.class);
-		addSingleton(LoginServerApplication.class);
+		Tools.printSection("Services");
+		bind(GameNameService.class).as(Scope.EagerSingleton);;
+	}
+
+	@Override
+	public void ready() {
+		Tools.printSection("Networking");
+		NetworkGameServer gameServer = new NetworkGameServer();
+		NetworkClientServer clientServer = new NetworkClientServer();
+
+		Corax.process(gameServer);
+		Corax.process(clientServer);
+
+		Tools.printSection("Status");
+		System.gc();
+
+		gameServer.start();
+		clientServer.start();
 		Runtime.getRuntime().addShutdownHook(new Thread(this));
 	}
-
+	
 	public static void main(String[] args) {
-		Corax.create(new LoginSetup()).getInstanceImpl(LoginServerApplication.class);
+		Corax.Install(new LoginSetup());
 	}
 
-	/* (non-Javadoc)
-	 * @see com.vethrfolnir.MuSetupTemplate#shutdown(corvus.corax.Corax)
-	 */
 	@Override
 	public void shutdown(Corax corax) {
-		
+		corax.getInstance(CorvusThreadPool.class).shutdown();
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Runnable#run()
-	 */
 	@Override
 	public void run() {
-		clean(); // meh
+		Corax.instance().destroy();
 	}
 }

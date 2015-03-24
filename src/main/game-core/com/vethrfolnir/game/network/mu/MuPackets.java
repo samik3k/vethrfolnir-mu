@@ -83,8 +83,57 @@ public class MuPackets {
 	
 	/**
 	 * Sends the full inventory packet<br>
+	 * Requires: GameObject
 	 */
 	public static final InventoryInfo InventoryInfo = new InventoryInfo();
+	
+	/**
+	 * Sends the confirmation that the item has been deleted from the inventory
+	 * Requires: int id
+	 */
+	public static final ExInventoryDeleteItem ExInventoryDeleteItem = new ExInventoryDeleteItem();
+	
+	/**
+	 * Sends the confirmation that an item has been placed in the inventory
+	 * Requires: MuItem
+	 */
+	public static final ExInventoryPlaceItem ExInventoryPlaceItem = new ExInventoryPlaceItem();
+
+	/**
+	 * Sends the confirmation that the item has been moved inside a window
+	 * Requires: MuItem, WindowType
+	 */
+	public static final ExInventoryMovedItem ExInventoryMovedItem = new ExInventoryMovedItem();
+	
+	/**
+	 * Sends the item info for the player viewport
+	 * Requires: MuItem, int groundId, boolean was dropped by player
+	 */
+	public static final ShowGroundItem ShowGroundItem = new ShowGroundItem();
+	
+	/**
+	 * Deletes an item thats on the ground
+	 * Requires: int groundid 
+	 */
+	public static final DeleteGroundItem DeleteGroundItem = new DeleteGroundItem();
+
+	/**
+	 * Sends information about a item's durability.
+	 * Requires: MuItem
+	 */
+	public static final ExDurabilityChange ExDurabilityChange = new ExDurabilityChange(); 
+	
+	/**
+	 * Sends information of the item's level
+	 * Requires: MuItem
+	 */
+	public static final ExItemLevelUpdate ExItemLevelUpdate = new ExItemLevelUpdate();
+	
+	/**
+	 * Sends the information about the zen a player has in his inventory & warehouse
+	 * Requires: player's inventory zen[int] and warehouse zen[int]
+	 */
+	public static final ExFullZenUpdate ExFullZenUpdate = new ExFullZenUpdate();
 	
 	/**
 	 * Send the status info of hp/sd and mana/whatever<br>
@@ -122,6 +171,11 @@ public class MuPackets {
 	 */
 	public static final NpcInfo NpcInfo = new NpcInfo();
 	
+	/**
+	 * Sends a message to the client which will show like a bubble above the npc name
+	 * Requires: int objId, String msg
+	 */
+	public static final CreatureSay CreatureSay = new CreatureSay();
 	/**
 	 * Sends the damage info to the client<br>
 	 * Requires: GameObject target, int dmg, DamageType and if needed an int with SD-Damage
@@ -170,4 +224,22 @@ public class MuPackets {
 	 * Require: GameObject entity, SkillId
 	 */
 	public static final MassSkillUse MassSkillUse = new MassSkillUse();
+	
+	/**
+	 * Send party invite<br>
+	 * Require: GameObject entity
+	 */
+	public static final ExPartyInvite ExPartyInvite = new ExPartyInvite();
+	
+	/**
+	 * Sends the party information
+	 * Require: party object, dismantle (boolean) 
+	 */
+	public static final PartyInfo PartyInfo = new PartyInfo();
+	
+	/**
+	 * Send Party Info Bar
+	 * Require: party object
+	 */
+	public static final ExPartyInfoBar ExPartyInfoBar = new ExPartyInfoBar();
 }

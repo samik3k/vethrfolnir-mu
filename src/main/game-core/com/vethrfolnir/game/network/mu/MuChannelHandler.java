@@ -29,10 +29,10 @@ import com.vethrfolnir.game.network.mu.packets.MuReadPacket;
 import com.vethrfolnir.game.network.mu.received.*;
 import com.vethrfolnir.logging.MuLogger;
 import com.vethrfolnir.network.ReadPacket;
+import com.vethrfolnir.tools.PrintData;
 
 import corvus.corax.Corax;
-import corvus.corax.processing.annotation.Inject;
-import corvus.corax.tools.PrintData;
+import corvus.corax.inject.Inject;
 
 /**
  * @author Vlad
@@ -69,6 +69,26 @@ public class MuChannelHandler extends ChannelInboundHandlerAdapter {
 		clientpackets.put(0x00, new RequestSay(false));
 		clientpackets.put(0x02, new RequestSay(true));
 
+		// Inventory
+		clientpackets.put(0x22, new ExInventoryPickUpItem());
+		clientpackets.put(0x23, new ExInventoryDropItem());
+		clientpackets.put(0x24, new ExInventoryMoveItem());
+//		clientpackets.put(0x26, new UseItem());
+		
+		// Item Utils and shops
+//		clientpackets.put(0x32, new ExBuyItem());
+//		clientpackets.put(0x33, new ExSellItem());
+		clientpackets.put(0x34, new ExInventoryRepairItem());
+		
+		// Party
+		clientpackets.put(0x40, new RequestPartyInvite());
+		clientpackets.put(0x41, new RequestPartyJoinAnswer());
+		clientpackets.put(0x42, new RequestPartyInfo());
+		clientpackets.put(0x43, new RequestLeaveParty());
+
+		
+		// NPC
+		clientpackets.put(0x30, new RequestNpcChat());
 	}
 	
 	/* (non-Javadoc)
@@ -88,6 +108,16 @@ public class MuChannelHandler extends ChannelInboundHandlerAdapter {
 	 */
 	@Override
 	public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+		log.info("A client disconnected "+ctx.channel());
+		MuClient client = ctx.channel().attr(MuClient.ClientKey).get();
+		client.close();
+	}
+	
+	/* (non-Javadoc)
+	 * @see io.netty.channel.ChannelInboundHandlerAdapter#channelUnregistered(io.netty.channel.ChannelHandlerContext)
+	 */
+	@Override
+	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
 		log.info("A client disconnected "+ctx.channel());
 		MuClient client = ctx.channel().attr(MuClient.ClientKey).get();
 		client.close();
@@ -154,6 +184,6 @@ public class MuChannelHandler extends ChannelInboundHandlerAdapter {
 		log.fatal("Uncaught exception!", cause);
 	}
 
-	public MuChannelHandler() { Corax.pDep(this); }
+	public MuChannelHandler() { Corax.process(this); }
 	
 }

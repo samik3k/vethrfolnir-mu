@@ -29,7 +29,7 @@ import com.vethrfolnir.game.services.dao.AccountDAO;
 import com.vethrfolnir.game.templates.AccountCharacterInfo;
 import com.vethrfolnir.logging.MuLogger;
 
-import corvus.corax.processing.annotation.Inject;
+import corvus.corax.inject.Inject;
 
 /**
  * @author Vlad
@@ -70,6 +70,7 @@ public class RequestCharacterDelete extends MuReadPacket {
 
 			client.sendPacket(MuPackets.CharacterDeleteAnswer, true);
 			dao.deleteCharacter(name);
+			DatabaseAccess.InventoryAccess().deleteInventory(character.charId);
 		}
 		catch(Exception e) {
 			MuLogger.e("Failed deleting character!", e);

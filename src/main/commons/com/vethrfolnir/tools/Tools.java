@@ -20,15 +20,15 @@ package com.vethrfolnir.tools;
 
 import java.io.File;
 import java.net.*;
-import java.util.ArrayList;
+import java.util.*;
 
-import corvus.corax.interfaces.AfterUnmarshal;
+import javax.xml.bind.Unmarshaller.Listener;
 
 /**
  * @author  Setekh
  */
-public class Tools
-{
+public class Tools {
+
 	public static void printSection(String s)
 	{
 		int maxlength = 79;
@@ -171,12 +171,26 @@ public class Tools
 
 	public static synchronized void afterUnmarshal(ArrayList<?> list) {
 		for (Object object : list) {
-			if(object instanceof AfterUnmarshal)
-				((AfterUnmarshal) object).afterUnmarshal(null, null);
+			if(object instanceof Listener)
+				((Listener) object).afterUnmarshal(null, null);
 		}
 	}
 	public static synchronized void afterUnmarshal(Object object) {
-		if(object instanceof AfterUnmarshal)
-			((AfterUnmarshal) object).afterUnmarshal(null, null);
+		if(object instanceof Listener)
+			((Listener) object).afterUnmarshal(null, null);
 	}
+
+	/**
+	 * @param data
+	 * @return
+	 */
+	public static byte[] toBytes(int[] data) {
+		byte[] toData = new byte[data.length];
+		
+		for (int i = 0; i < toData.length; i++)
+			toData[i] = (byte) data[i];
+
+		return toData;
+	}
+	
 }

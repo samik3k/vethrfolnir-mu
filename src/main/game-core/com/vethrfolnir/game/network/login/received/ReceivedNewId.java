@@ -21,7 +21,7 @@ import io.netty.buffer.ByteBuf;
 import com.vethrfolnir.network.NetworkClient;
 import com.vethrfolnir.network.ReadPacket;
 
-import corvus.corax.CorvusConfig;
+import corvus.corax.Corax;
 
 /**
  * @author Vlad
@@ -29,12 +29,9 @@ import corvus.corax.CorvusConfig;
  */
 public class ReceivedNewId extends ReadPacket {
 
-	/* (non-Javadoc)
-	 * @see com.vethrfolnir.network.ReadPacket#read(com.vethrfolnir.network.NetworkClient, io.netty.buffer.ByteBuf, java.lang.Object[])
-	 */
 	@Override
 	public void read(NetworkClient context, ByteBuf buff, Object... params) {
-		CorvusConfig.addProperty("LoginServer.ServerId", buff.readInt());
+		Corax.config().setProperty("LoginServer.ServerId", buff.readInt());
 	}
 
 }

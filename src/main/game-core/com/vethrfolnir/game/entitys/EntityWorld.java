@@ -17,13 +17,12 @@
 package com.vethrfolnir.game.entitys;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 import com.vethrfolnir.game.network.mu.MuClient;
 import com.vethrfolnir.logging.MuLogger;
 import com.vethrfolnir.tools.Updatable;
 
-import corvus.corax.processing.annotation.Initiate;
+import corvus.corax.inject.Inject;
 
 /**
  * @author Vlad
@@ -32,8 +31,6 @@ import corvus.corax.processing.annotation.Initiate;
 public final class EntityWorld implements Updatable {
 	private static final MuLogger log = MuLogger.getLogger(EntityWorld.class);
 
-	private static final long ExpireTime = TimeUnit.HOURS.toMillis(1);
-
 	private static final HashMap<Class<?>, ComponentIndex<?>> componentIndexes = new HashMap<Class<?>, ComponentIndex<?>>();
 	protected static volatile int componentIndexSize;
 	
@@ -41,9 +38,7 @@ public final class EntityWorld implements Updatable {
 	private final ArrayList<GameObject> entitys = new ArrayList<>();
 	private final ArrayList<GameObject> free = new ArrayList<>();
 
-	private int tickAcum;
-	
-	@Initiate
+	@Inject
 	public void initialize() {
 		log.info("Initialized");
 		obtain(); // Dummy, id's cant be 0
@@ -98,38 +93,8 @@ public final class EntityWorld implements Updatable {
 				
 			entity.update(tick, deltaTime);
 		}
-		
-		//TODO Optimize method here
-		tickAcum += tick;
-		
-		if(tickAcum >= 65535) {
-			log.info("Performing pool cleaning!");
-			tickAcum = 0;
-			optimize();
-		}
 	}
 
-	public void optimize() {
-		ArrayList<GameObject> garbage = new ArrayList<GameObject>();
-		for (int i = 0; i < free.size(); i++) {
-			GameObject e = free.get(i);
-			
-			// Hasent been used for 1h
-			if((e.lastUsed + ExpireTime) <= System.currentTimeMillis()) {
-				garbage.add(e);
-			}
-		}
-
-		log.info("Destroying "+garbage.size()+" unused entity(s).");
-		for (int i = 0; i < garbage.size(); i++) {
-			GameObject obj = garbage.get(i);
-			free.remove(obj.freeIndex);
-			entitys.remove(obj.index);
-		}
-		
-		garbage.clear();
-	}
-	
 	@SuppressWarnings("unchecked")
 	public static synchronized <T extends Component> ComponentIndex<T> getComponentIndex(Class<T> type) {
 		ComponentIndex<?> index = componentIndexes.get(type);

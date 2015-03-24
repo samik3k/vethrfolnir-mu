@@ -20,12 +20,13 @@ import static com.vethrfolnir.game.network.mu.crypt.MuCryptUtils.GetHeaderSize;
 import static com.vethrfolnir.game.network.mu.crypt.MuCryptUtils.GetPacketSize;
 import io.netty.buffer.*;
 
+import java.io.File;
 import java.nio.ByteOrder;
 
 import com.vethrfolnir.services.assets.AssetManager;
 
 import corvus.corax.*;
-import corvus.corax.processing.PrimeAnnotations;
+import corvus.corax.config.CorvusConfig;
 
 /**
  * @author Vlad
@@ -55,10 +56,9 @@ public final class MuEncoder {
 		short[] Contents = new short[contentSize + 1];
         Contents[0] = (short) serial; // XXX:  Check this
 
-        buff.readerIndex(1);
+        buff.readerIndex(header - 1);
         
-        //XXX When a c4.. 
-        buff.setByte(1, serial);
+        buff.setByte(header - 1, serial);
         
         MuCryptUtils.readAsUByteArray(buff, Contents);
         
@@ -262,14 +262,13 @@ public final class MuEncoder {
 
     
     public static void main(String[] args) {
-    	Corax.create(new CoraxSetupTemplate() {
-
+    	Corax.Install(new CoraxBuilder() {
+			
 			@Override
-			public void action() {
-				installCorvusConfig("./dist/GameServer/config");
-				CorvusConfig.WorkingDirectory = "./dist/GameServer";
-				installProcessor(new PrimeAnnotations());
-				addSingleton(AssetManager.class);
+			protected void build(Corax corax) {
+				CorvusConfig.WorkingDirectory = new File("./dist/GameServer");
+				Corax.config().loadDirectory("/config");
+				bind(AssetManager.class).as(Scope.Singleton);;
 			}
     	});
     	

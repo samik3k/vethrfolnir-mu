@@ -20,28 +20,32 @@ import gnu.trove.iterator.TIntIterator;
 
 import java.util.ArrayList;
 
-import com.fasterxml.jackson.annotation.*;
-import com.vethrfolnir.game.entitys.*;
-import com.vethrfolnir.game.entitys.components.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.vethrfolnir.game.entitys.EntityWorld;
+import com.vethrfolnir.game.entitys.GameObject;
+import com.vethrfolnir.game.entitys.components.Positioning;
 import com.vethrfolnir.game.entitys.components.creature.CreatureState;
 import com.vethrfolnir.game.entitys.components.creature.CreatureStats;
 import com.vethrfolnir.game.entitys.components.player.KnownCreatures;
 import com.vethrfolnir.game.entitys.components.player.PlayerMapping;
+import com.vethrfolnir.game.module.item.GroundItem;
+import com.vethrfolnir.game.module.item.MuItem;
 import com.vethrfolnir.game.network.mu.MuPackets;
+import com.vethrfolnir.game.services.GameController;
 import com.vethrfolnir.game.templates.npc.NpcTemplate;
 import com.vethrfolnir.game.templates.npc.SpawnTemplate;
 import com.vethrfolnir.logging.MuLogger;
 import com.vethrfolnir.network.WritePacket;
-import com.vethrfolnir.tools.Disposable;
+import com.vethrfolnir.tools.*;
 
 import corvus.corax.Corax;
-import corvus.corax.tools.Rnd;
 
 /**
  * @author Vlad
  *
  */
-public class Region implements Disposable {
+public class Region implements Disposable, Updatable {
 	
 	@SuppressWarnings("unused")
 	private static final MuLogger log = MuLogger.getLogger(Region.class);
@@ -62,14 +66,21 @@ public class Region implements Disposable {
 	public final ArrayList<GameObject> nonPlayers = new ArrayList<GameObject>();
 	
 	@JsonIgnore
-	private final EntityWorld entityWorld; 
+	public final ArrayList<GroundItem> groundItems = new ArrayList<GroundItem>(); 
 	
+	@JsonIgnore
+	private final EntityWorld entityWorld;
+
+	private boolean needsCleanup;
+
 	/**
 	 * Un-serialization
 	 */
 	public Region() {
-		if(Corax.instance() != null)
-			entityWorld = Corax.getInstance(EntityWorld.class);
+		if(Corax.instance() != null) {
+			entityWorld = Corax.fetch(EntityWorld.class);
+			Corax.fetch(GameController.class).subscribe(this);
+		}
 		else
 			entityWorld = null;
 	}
@@ -81,10 +92,9 @@ public class Region implements Disposable {
 	public Region(int regionId, String regionName) {
 		this.regionId = regionId;
 		this.regionName = regionName;
-
 		//XXX Inside eclipse.. for parsing files. Remove after done importing region based stuff
 		if(Corax.instance() != null)
-			entityWorld = Corax.getInstance(EntityWorld.class);
+			entityWorld = Corax.fetch(EntityWorld.class);
 		else
 			entityWorld = null;
 	}
@@ -123,6 +133,23 @@ public class Region implements Disposable {
 		this.x = startX;
 		this.y = startY;
 		this.moveLevel = moveLevel;
+	}
+	
+	@Override
+	public void update(int tick, float deltaTime) {
+		if(needsCleanup && tick != 10)
+			return;
+		
+		ArrayList<GroundItem> garbage = new ArrayList<GroundItem>();
+		for (int i = 0; i < groundItems.size(); i++) {
+			GroundItem gi = groundItems.get(i);
+			
+			if(gi.isVoid)
+				garbage.add(gi);
+		}
+		
+		groundItems.removeAll(garbage);
+		needsCleanup = false;
 	}
 	
 	/**
@@ -167,7 +194,7 @@ public class Region implements Disposable {
 	 */
 	public void spawn(SpawnTemplate template, NpcTemplate npcTemplate) {
 		if(template.Count > 0) {
-			for (int i = 0; i < template.Count; i++) {
+			for (int i = 0; i < template.Count; i++) { 
 				int x = Rnd.get(template.StartX, template.x);
 				int y = Rnd.get(template.StartY, template.y);
 				spawn(x, y, template.heading, npcTemplate);
@@ -192,6 +219,44 @@ public class Region implements Disposable {
 			entityWorld.free(entity);
 			throw e;
 		}
+	}
+
+	/**
+	 * @param item
+	 * @param y 
+	 * @param x 
+	 * @param drop 
+	 */
+	public void dropItem(MuItem item, int x, int y, boolean drop) {
+		groundItems.add(new GroundItem(item, x, y, drop));
+	}
+
+	/**
+	 * @param objId
+	 */
+	public GroundItem getGroundItem(int objId) {
+		for (int i = 0; i < groundItems.size(); i++) {
+			GroundItem it = groundItems.get(i);
+			
+			if(it.item.getObjectId() == objId)
+				return it;
+		}
+		
+		return null;
+	}
+
+	/**
+	 * @param objId
+	 * @return
+	 */
+	public GameObject getNpc(int objId) {
+		for (int i = 0; i < nonPlayers.size(); i++) {
+			GameObject npc = nonPlayers.get(i);
+			
+			if(npc.getWorldIndex() == objId)
+				return npc;
+		}
+		return null;
 	}
 
 	/**
@@ -277,6 +342,10 @@ public class Region implements Disposable {
 	@Override
 	public String toString() {
 		return "Region[id="+regionId+" name="+regionName+"]";
+	}
+
+	public void needsCleanup() {
+		needsCleanup = true;
 	}
 
 }

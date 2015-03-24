@@ -22,14 +22,19 @@ import com.vethrfolnir.game.config.PlayerConfig;
 import com.vethrfolnir.game.entitys.*;
 import com.vethrfolnir.game.entitys.annotation.FetchIndex;
 import com.vethrfolnir.game.entitys.components.Positioning;
-import com.vethrfolnir.game.entitys.components.player.PlayerState;
-import com.vethrfolnir.game.entitys.components.player.PlayerStats;
+import com.vethrfolnir.game.entitys.components.creature.CreatureMapping;
+import com.vethrfolnir.game.entitys.components.inventory.Inventory;
+import com.vethrfolnir.game.entitys.components.player.*;
+import com.vethrfolnir.game.module.MuParty;
 import com.vethrfolnir.game.module.StaticData;
+import com.vethrfolnir.game.module.item.MuItem;
 import com.vethrfolnir.game.network.mu.MuClient;
 import com.vethrfolnir.game.network.mu.MuPackets;
 import com.vethrfolnir.game.network.mu.packets.MuReadPacket;
 import com.vethrfolnir.game.network.mu.send.SystemMessage.MessageType;
+import com.vethrfolnir.game.services.IdFactory;
 import com.vethrfolnir.game.staticdata.world.Region;
+import com.vethrfolnir.game.templates.item.ItemTemplate;
 
 import corvus.corax.Corax;
 
@@ -71,7 +76,7 @@ public class RequestSay extends MuReadPacket {
 	
 	public RequestSay(boolean isPrivate) {
 		this.isPrivate = isPrivate;
-		entityWorld = Corax.getInstance(EntityWorld.class);
+		entityWorld = Corax.fetch(EntityWorld.class);
 	}
 	
 	@Override
@@ -118,6 +123,27 @@ public class RequestSay extends MuReadPacket {
 			return;
 		}
 
+		if(message.equals("kappa")) {
+			client.sendPacket(MuPackets.SystemMessage, "WOOT!", MessageType.Normal);
+			ItemTemplate temp = StaticData.getItemData().getTemplate(0, 2);
+			MuItem item = new MuItem(Corax.fetch(IdFactory.class).obtain(), temp);
+			Inventory inventory = client.getEntity().get(CreatureMapping.Inventory);
+			inventory.store(item);
+			return;
+		}
+		if(message.equals("kappa2")) {
+			client.sendPacket(MuPackets.SystemMessage, "WOOT!", MessageType.Normal);
+			ItemTemplate temp = StaticData.getItemData().getTemplate(0, 1);
+			MuItem item = new MuItem(Corax.fetch(IdFactory.class).obtain(), temp);
+			Inventory inventory = client.getEntity().get(CreatureMapping.Inventory);
+			inventory.store(item);
+			return;
+		}
+		if(message.equals("forceInv")) {
+			client.sendPacket(MuPackets.InventoryInfo, client.getEntity());
+			return;
+		}
+		
 		if (message.startsWith("//")) {
 			PlayerState state = client.getEntity().get(this.state);
 			
@@ -137,6 +163,11 @@ public class RequestSay extends MuReadPacket {
 			// TODO Implement Chat types!
 			switch (type) {
 				case Party:
+					PlayerState state = client.getEntity().get(PlayerMapping.PlayerState);
+					if(state.getParty() != null) {
+						MuParty party = state.getParty();
+						party.sendPacket(MuPackets.PlayerSay, from, message);
+					}
 					return;
 				case Alliance:
 					return;

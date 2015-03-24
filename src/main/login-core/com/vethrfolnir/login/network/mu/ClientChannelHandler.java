@@ -28,10 +28,10 @@ import com.vethrfolnir.login.network.mu.send.SendServerInfo;
 import com.vethrfolnir.login.network.mu.send.SendServerLists;
 import com.vethrfolnir.login.services.GameNameService;
 import com.vethrfolnir.network.WritePacket;
+import com.vethrfolnir.tools.PrintData;
 
 import corvus.corax.Corax;
-import corvus.corax.processing.annotation.Inject;
-import corvus.corax.tools.PrintData;
+import corvus.corax.inject.Inject;
 
 /**
  * @author Vlad
@@ -70,6 +70,16 @@ public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		ByteBuf buff = (ByteBuf)msg;
 
+		switch (buff.getUnsignedByte(0)) {
+			case 0xC1: case 0xC2: case 0xC3: case 0xC4:
+				break;
+				default:
+					ctx.close();
+					buff.release(); //TODO: maybe add a flood protector?
+					log.warn("Client["+ctx.channel()+"] is not a mu online client! Disconnecting!");
+					return;
+		}
+		
 		// we are not interested in the header and size;
 		buff.readerIndex(2);
 		
@@ -100,6 +110,7 @@ public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
 			}
 			default:
 				log.warn("Unkown packet[OPCODE = "+Integer.toHexString(opcode)+"] Dump: "+PrintData.printData(buff.nioBuffer(0, buff.writerIndex())));
+				ctx.close();
 				break;
 		}
 		buff.release();
@@ -119,5 +130,5 @@ public class ClientChannelHandler extends ChannelInboundHandlerAdapter {
 		log.fatal("Uncaught exception!", cause);
 	}
 
-	public ClientChannelHandler() { Corax.pDep(this); }
+	public ClientChannelHandler() { Corax.process(this); }
 }

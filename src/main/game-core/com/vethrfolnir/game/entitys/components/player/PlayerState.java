@@ -16,29 +16,23 @@
  */
 package com.vethrfolnir.game.entitys.components.player;
 
-import javax.xml.transform.Templates;
-
 import com.vethrfolnir.game.entitys.Component;
 import com.vethrfolnir.game.entitys.GameObject;
-import com.vethrfolnir.game.module.DatabaseAccess;
+import com.vethrfolnir.game.module.MuParty;
 import com.vethrfolnir.game.network.mu.MuClient;
-import com.vethrfolnir.game.services.DatabaseService;
-import com.vethrfolnir.game.services.dao.PlayerDAO;
 import com.vethrfolnir.game.staticdata.ClassId;
-import com.vethrfolnir.game.templates.AccountCharacterInfo;
 import com.vethrfolnir.game.templates.PlayerTemplate;
 import com.vethrfolnir.network.WritePacket;
-
-import corvus.corax.Corax;
 
 /**
  * @author Vlad
  *
  */
-@SuppressWarnings("unused")
 public class PlayerState implements Component {
 
 	protected MuClient client;
+	
+	@SuppressWarnings("unused")
 	private GameObject entity;
 
 	protected final int charId;
@@ -46,6 +40,8 @@ public class PlayerState implements Component {
 	
 	private int accessLevel;
 	private int zen;
+	
+	private MuParty party;
 	
 	/**
 	 * @param template
@@ -126,6 +122,20 @@ public class PlayerState implements Component {
 	}
 
 	/**
+	 * @return the party
+	 */
+	public MuParty getParty() {
+		return party;
+	}
+	
+	/**
+	 * @param party the party to set
+	 */
+	public void setParty(MuParty party) {
+		this.party = party;
+	}
+
+	/**
 	 * Delecation from MuClient
 	 */
 	public void sendPacket(WritePacket packet, Object... params) {
@@ -141,5 +151,4 @@ public class PlayerState implements Component {
 		entity = null;
 		classId = null;
 	}
-
 }

@@ -21,9 +21,9 @@ import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 
 import com.vethrfolnir.logging.MuLogger;
+import com.vethrfolnir.services.threads.CorvusThreadPool;
 
 import corvus.corax.Corax;
-import corvus.corax.threads.CorvusThreadPool;
 
 /**
  * @author Vlad
@@ -35,7 +35,7 @@ public abstract class ReadPacket {
 	public abstract void read(NetworkClient context, ByteBuf buff, Object... params);
 	
 	public ReadPacket() {
-		Corax.pDep(this);
+		Corax.process(this);
 	}
 
 	protected short readC(ByteBuf buff) {
@@ -57,6 +57,12 @@ public abstract class ReadPacket {
 	 */
 	protected ByteBuf readArray(ByteBuf buff) {
 		return buff.readBytes(buff.readableBytes());
+	}
+
+	protected byte[] readByteArray(ByteBuf buff) {
+		byte[] arr = new byte[buff.readableBytes()];
+		buff.readBytes(arr);
+		return arr;
 	}
 
 	/**
@@ -117,11 +123,11 @@ public abstract class ReadPacket {
 	 * @param run
 	 */
 	protected final void enqueue(Runnable run) {
-		Corax.getInstance(CorvusThreadPool.class).executeLongRunning(run);
+		Corax.fetch(CorvusThreadPool.class).executeLongRunning(run);
 	}
 	
 	protected final void enqueue(final Object... buff) {
-		Corax.getInstance(CorvusThreadPool.class).executeLongRunning(new Runnable() {
+		Corax.fetch(CorvusThreadPool.class).executeLongRunning(new Runnable() {
 			
 			@Override
 			public void run() {
